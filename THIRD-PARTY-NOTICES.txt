@@ -1,0 +1,104 @@
+Rugrats Adventure Game - Unofficial 64-bit Port
+THIRD-PARTY NOTICES AND ACKNOWLEDGEMENTS
+===========================================================================================
+
+The port (RUGRATS.EXE) is licensed under the GNU GPL v3 or later (LICENSE.TXT). It
+includes or is distributed with the open-source components below, each under its own license.
+
+-------------------------------------------------------------------------------------------
+1. SDL2 (Simple DirectMedia Layer) 2.30.11            file: SDL2.dll
+-------------------------------------------------------------------------------------------
+https://www.libsdl.org/    source: https://github.com/libsdl-org/SDL/releases/tag/release-2.30.11
+
+Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+
+This software is provided 'as-is', without any express or implied warranty. In no event will
+the authors be held liable for any damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose, including commercial
+applications, and to alter it and redistribute it freely, subject to the following
+restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim that you wrote
+   the original software. If you use this software in a product, an acknowledgment in the
+   product documentation would be appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be misrepresented as
+   being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+-------------------------------------------------------------------------------------------
+2. FFmpeg                    files: avcodec-*.dll avformat-*.dll avutil-*.dll swscale-*.dll
+                                    swresample-*.dll
+-------------------------------------------------------------------------------------------
+https://ffmpeg.org/
+
+FFmpeg is free software licensed under the GNU Lesser General Public License v2.1 or later.
+The DLLs shipped with this release are the "win64-gpl-shared" build by BtbN
+(FFmpeg-Builds), version N-127564-g3c92f003c7, which enables optional GPL components and
+is therefore distributed under the GNU General Public License v3 (full text: LICENSE.TXT).
+
+Corresponding source:
+  FFmpeg:          https://git.ffmpeg.org/ffmpeg.git  commit 3c92f003c7
+                   (mirror: https://github.com/FFmpeg/FFmpeg/commit/3c92f003c7)
+  Build scripts and the source of every bundled library:
+                   https://github.com/BtbN/FFmpeg-Builds
+On request, the port's maintainer will provide the complete corresponding source of these
+DLLs for at least three years from the date of each release (GPL v3, section 6).
+
+FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project.
+
+The port uses FFmpeg only to decode the game's own QuickTime movies (Cinepak, Apple SMC
+video; IMA ADPCM and PCM audio). Releases may instead ship an LGPL-only FFmpeg build with just
+these decoders. In that case FFmpeg's license is the GNU LGPL v2.1 or later (full text:
+LICENSE-LGPL-2.1.TXT).
+
+-------------------------------------------------------------------------------------------
+3. GCC runtime (libstdc++, libgcc) and mingw-w64       statically linked into RUGRATS.EXE
+-------------------------------------------------------------------------------------------
+The executable is built with the mingw-w64 GCC 13 toolchain and statically links:
+
+  - libstdc++ and libgcc: GNU GPL v3 with the GCC Runtime Library Exception v3.1.
+    https://gcc.gnu.org/onlinedocs/libstdc++/manual/license.html
+  - winpthreads: Copyright (c) 2011 mingw-w64 project. MIT-style license:
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+    persons to whom the Software is furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+    OF ANY KIND, EXPRESS OR IMPLIED.
+  - mingw-w64 runtime (CRT startup code and import libraries): Zope Public License v2.1 /
+    public domain. https://www.mingw-w64.org/
+
+-------------------------------------------------------------------------------------------
+4. Acknowledgements
+-------------------------------------------------------------------------------------------
+- The ScummVM project (https://www.scummvm.org/). Its Mohawk / Living Books engine was an
+  invaluable public reference for the Mohawk archive and LB script formats. ScummVM is GPL
+  v3 or later.
+- The game-preservation community, for keeping the documentation of these 1990s formats alive.
+- Logo artwork: the Rugrats Adventure Game logo in the large icon sizes and in the
+  installer's page banner is from the LaunchBox Games Database
+  (https://gamesdb.launchbox-app.com/); its original source is unknown. The logo is a
+  trademark of its owners (see section 5).
+- Installer artwork: the picture on the installer's welcome and finish pages is fan art
+  (artist unknown) from the LaunchBox Games Database. If you made it, please open an issue
+  on GitHub to be credited by name or to have it removed. The Rugrats characters are
+  trademarks of Viacom International Inc. (see section 5).
+- Installer error icon: from the Nuvola icon set by David Vignoni, via Wikimedia Commons
+  (https://commons.wikimedia.org/). Nuvola is licensed under the GNU Lesser General Public
+  License v2.1 (full text: LICENSE-LGPL-2.1.TXT). The icon was converted to a bitmap for
+  the installer's error dialog.
+- Developed with Claude by Anthropic.
+
+-------------------------------------------------------------------------------------------
+5. The game itself
+-------------------------------------------------------------------------------------------
+(c) 1998 Viacom International Inc. All Rights Reserved. Rugrats and all related titles,
+logos and characters are trademarks of Viacom International Inc. Rugrats created by
+Arlene Klasky, Gabor Csupo and Paul Germain.
+
+Unofficial port by T.M. DEVELOPMENTS. Not endorsed by or affiliated with HMH Education
+Company, Encore, Inc., Nickelodeon or Skydance Corporation. None of the game's content is
+included in this distribution. The port reads it from the user's own original CD-ROM.

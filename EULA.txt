@@ -1,0 +1,57 @@
+RUGRATS ADVENTURE GAME - UNOFFICIAL 64-BIT PORT
+LICENSE AGREEMENT AND DISCLAIMER
+
+Please read this before installing. By installing or using this software you agree to the
+terms below. If you do not agree, cancel setup.
+
+1. WHAT THIS IS
+   This is an unofficial, noncommercial fan port made by T.M. DEVELOPMENTS. It lets the 1998
+   game Rugrats Adventure Game run on modern 64-bit (x64) Windows. It is a new program that plays
+   the original game's files. It contains NO game content: no art, animation, video, voices,
+   music, scripts or text from the original game.
+
+2. YOU MUST OWN THE ORIGINAL
+   To make our lawyers happy, you may only use this port with an original, lawfully obtained
+   copy of the Rugrats Adventure Game CD-ROM that you own. Setup copies the game files from
+   that disc to your computer for your personal use, and the game runs from that copy. Do
+   not use this port with copies you do not own, and do not distribute the game's files.
+
+3. NO AFFILIATION
+   © 1998 Viacom International Inc. All Rights Reserved. Rugrats and all related titles,
+   logos and characters are trademarks of Viacom International Inc. Rugrats created by
+   Arlene Klasky, Gabor Csupo and Paul Germain.
+   This unofficial port by T.M. DEVELOPMENTS is NOT endorsed by or affiliated with HMH
+   Education Company, Encore, Inc., Nickelodeon or Skydance Corporation. All trademarks
+   belong to their respective owners. They are used here only to identify the game the
+   port is compatible with. Do not contact those companies for support of this port.
+
+4. OPEN-SOURCE LICENSE
+   The port's own code is free software under the GNU General Public License, version 3 or
+   (at your option) any later version. See LICENSE.TXT. You may copy, modify and
+   redistribute the port's code under that license. The GPL does not cover the game's
+   content (see 2 and 3).
+   The port includes SDL2 (zlib License) and FFmpeg (GNU LGPL/GPL). Their licenses, copyright
+   notices and source locations are in THIRD-PARTY-NOTICES.TXT. Nothing in this agreement
+   limits your rights under those licenses.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+   PURPOSE AND NON-INFRINGEMENT. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+   SOFTWARE IS WITH YOU.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT WILL THE AUTHOR OR ANY CONTRIBUTOR BE LIABLE FOR ANY DAMAGES, INCLUDING ANY
+   GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES (INCLUDING LOSS OF DATA OR SAVED
+   GAMES) ARISING OUT OF THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
+   POSSIBILITY OF SUCH DAMAGES, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
+
+7. TAKEDOWN
+   If you are a rights holder and have a concern about this project, please open an issue
+   on the project's GitHub page. The author will respond promptly.
+
+8. SUPPORT
+   Bug reports and feature requests: the project's GitHub Issues page. Do not contact the
+   companies named in section 3 about this port.
+
+Unofficial port © 2026 T.M. DEVELOPMENTS. Developed with Claude by Anthropic.

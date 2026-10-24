@@ -1,0 +1,46 @@
+# Build output
+/build/
+/out/
+*.o
+*.obj
+*.res
+*.exe
+*.dll
+*.pdb
+*.dmp
+
+# Local play-test and release folders (binaries go to GitHub Releases, never into the repo)
+/bin/
+/dist/
+
+# Never commit the game's own files: they belong to their rights holders
+MHK/
+PROGRAM/
+movies/
+sounds/
+*.MHK
+*.mhk
+*.mov
+saves/
+UserData/
+settings.ini
+rugrats_players.txt
+PLAYFILE
+GLOBALS
+portable
+portable.txt
+
+# Logs, crash reports and editor leftovers
+rugrats_log.txt
+rugrats_crash*.txt
+*.log
+*.bak
+*.ai-edit.bak
+*~
+.vs/
+.vscode/
+
+# Installer build output (the .wsi project itself is kept)
+*.msi
+*.cab
+installer/output/
