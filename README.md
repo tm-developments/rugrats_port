@@ -43,7 +43,7 @@ update KB2999226 and a Windows 7-compatible FFmpeg build, but they are untested.
 4. Setup converts the movies and sounds once (`RUGRATS.EXE --prepare`). This takes a minute
    or two.
 
-Downloads are on the project's **GitHub Releases** page (mirrored on
+Downloads are on the project's **[GitHub Releases](https://github.com/tm-developments/rugrats_port/releases)** page (mirrored on
 SourceForge). The installer isn't code-signed, so Windows SmartScreen may say "Windows protected
 your PC". Click **"More info"**, then **"Run anyway"**.
 
@@ -91,15 +91,26 @@ mute=0              1 = muted
 
 ## Controls and switches
 
-Everything in the game is mouse-driven, as in the original. The port adds:
+Everything in the game is mouse-driven, as in the original. The original's keyboard shortcuts
+(from its manual and ReadMe) all work:
 
 | Key | Action |
 |---|---|
-| **Alt+Enter** | Switch between full screen and a window (also **Options > Display > Zoom**) |
-| **Ctrl+Enter** | Stop Movie (the original player's shortcut, also **File > Stop Movie**) |
-| **Alt** (windowed) | Show or hide the menu bar (shown when the game starts in a window; hidden after Alt+Enter until you press Alt; never in full screen) |
-| **Esc** | Same as the toolbar's Quit button |
-| **Space / Enter / Esc** | Skip a cutscene where the original allows it (never the end credits) |
+| **Alt+Enter**, **Ctrl+Enter** or **Space** | Skip a movie, where the original allows it (never the end credits). Also **File > Stop Movie** |
+| **Ctrl+Q** | Quit the game (**File > Exit**) |
+| **Alt+R** or **Ctrl+R** | Go to the Replay screen (**File > Go To Replay**) |
+| **Ctrl+Up** / **Ctrl+Down** | Turn the volume up / down (**Options > Volume**) |
+| **Ctrl+M** | Mute or unmute (**Options > Volume > Mute**) |
+| **Ctrl+V** | About the game (**File > About**) |
+| **Alt** (windowed) | Show or hide the menu bar (shown when the game starts in a window; hidden after F11 until you press Alt; never in full screen) |
+
+The port adds:
+
+| Key | Action |
+|---|---|
+| **F11** | Switch between full screen and a window (also **Options > Display > Zoom**) |
+| **Esc** | Same as the toolbar's Quit button; during a movie, skips it like Space |
+| **Enter** | Also skips a movie, like Space |
 | **Alt+Tab** | In exclusive full screen the game minimizes to the taskbar and pauses; click it to return |
 | **Alt+F4** | Close the game at once, in any mode (emergency exit; progress is still saved on the way out) |
 
@@ -150,7 +161,7 @@ and the endings are the original's.** Changes cover how it runs on a modern PC.
   switch, no flicker), the 640x480 canvas scaled to fit with correct 4:3 proportions and
   pillarboxing on wide screens.
 - Optional **borderless full screen** and a **resizable window** with the original menu bar.
-  Alt+Enter and Alt work as described above. Drawn with Direct3D 11, using
+  F11 and Alt work as described above. Drawn with Direct3D 11, using
   Windows' modern flip-model presentation.
 - **Per-monitor DPI-aware**, so it's sharp on 4K and laptop displays with no blurry Windows
   scaling.
@@ -199,7 +210,7 @@ play-testing side by side against footage of the original.
 
 ## Bugs and feature requests
 
-Please report bugs and suggest features on the project's **GitHub Issues** page.
+Please report bugs and suggest features on the project's **[GitHub Issues](https://github.com/tm-developments/rugrats_port/issues)** page.
 That's the only place they're tracked. The SourceForge page is a download mirror.
 
 A good bug report includes:

@@ -10,7 +10,7 @@
 // Saves, settings.ini and the log: %APPDATA%\Rugrats Adventure Game (or UserData\ beside
 // the game when a file named "portable" is there, or --userdir).
 // Display: exclusive full screen at the desktop resolution by default, the 640x480 game
-// scaled to fit (4:3, pillarboxed). Alt+Enter / Options > Display > Zoom toggle a
+// scaled to fit (4:3, pillarboxed). F11 / Options > Display > Zoom toggle a
 // window, which has the original menu bar (Alt shows / hides it).
 // Development builds (-DRUGRATS_DEV, see devenv.h) add test switches such as
 // --headless-frames N, --at FRAME:ACTION and trace environment variables.
@@ -365,6 +365,12 @@ public:
                     std::sscanf(arg.c_str(), "%d,%d", &ax, &ay);
                     if (act == "shot") { Render(); Screenshot(arg); }
                     else if (act == "esc") { SDL_Event ev{}; ev.type = SDL_KEYDOWN; ev.key.keysym.sym = SDLK_ESCAPE; EngineEvent(ev); }
+                    else if (act == "sdlkey") {                 // sdlkey:KEYCODE,MOD - through the window's key path
+                        int kc = 0, km = 0; std::sscanf(arg.c_str(), "%d,%d", &kc, &km);
+                        SDL_Event ev{}; ev.type = SDL_KEYDOWN; ev.key.keysym.sym = kc; ev.key.keysym.mod = Uint16(km);
+                        std::printf("SDLKEY f%ld key %d mod %d\n", frame, kc, km);
+                        if (!MenuEvent(ev) && mode_ == Mode::Engine && lb_) EngineEvent(ev);
+                    }
                     else if (act == "move") { mouseX_ = ax; mouseY_ = ay; mouseIn_ = true; EngineMouseMove(ax, ay); }
                     else if (act == "down") { EngineMouseMove(ax, ay); EngineClick(ax, ay, true); }
                     else if (act == "up") { EngineMouseMove(ax, ay); EngineClick(ax, ay, false); }
@@ -1163,7 +1169,7 @@ private:
         if (e.type == SDL_MOUSEBUTTONDOWN) return e.button.button == SDL_BUTTON_LEFT || e.button.button == SDL_BUTTON_RIGHT;
         if (e.type != SDL_KEYDOWN || e.key.repeat) return false;
         const SDL_Keycode k = e.key.keysym.sym;
-        if (e.key.keysym.mod & (KMOD_SHIFT | KMOD_ALT)) return false;          // Alt+Enter: the display toggle
+        if (e.key.keysym.mod & KMOD_SHIFT) return false;                       // (Alt+Enter skips too: Stop Movie)
         return k == SDLK_ESCAPE || k == SDLK_SPACE || k == SDLK_RETURN || k == SDLK_KP_ENTER;
     }
 
@@ -1447,12 +1453,13 @@ private:
     //   Options: Display > Disable Mode Changes (202), Disable Warnings (203), Zoom (204)
     //            Volume  > Mute (205), Increase (206), Decrease (207)
     // Hidden while playing; Alt (pressed and released on its own) shows or hides it, as the
-    // manual's shortcut table says. Shortcuts: Alt+Enter, Ctrl+R, Ctrl+V, Ctrl+Q, Ctrl+M,
-    // Ctrl+Up, Ctrl+Down (plus the manual's Alt+R and the ReadMe's Ctrl+Enter).
+    // manual's shortcut table says. Shortcuts: Alt+Enter (Stop Movie, as in the manual), Ctrl+R,
+    // Ctrl+V, Ctrl+Q, Ctrl+M, Ctrl+Up, Ctrl+Down (plus the manual's Alt+R and the ReadMe's
+    // Ctrl+Enter). The port's own full screen / window switch is F11.
     int Accelerator(const SDL_Keysym& ks) const {
         const bool ctrl = ks.mod & KMOD_CTRL, alt = ks.mod & KMOD_ALT;
         const SDL_Keycode k = ks.sym;
-        if ((k == SDLK_RETURN || k == SDLK_KP_ENTER) && ctrl && !alt) return 101;   // (Alt+Enter: full screen / window)
+        if ((k == SDLK_RETURN || k == SDLK_KP_ENTER) && (ctrl || alt) && !(ks.mod & KMOD_SHIFT)) return 101;   // Alt+Enter / Ctrl+Enter
         if (k == SDLK_r && (ctrl || alt)) return 102;
         if (k == SDLK_v && ctrl) return 109;
         if (k == SDLK_q && ctrl) return 103;
@@ -1508,7 +1515,7 @@ private:
     }
     // ---- display: exclusive full screen (default), borderless full screen, or a window ------
     // The 640x480 screen is scaled to fit, keeping its 4:3 shape (black bars at the sides on a
-    // wide display). Alt+Enter (and Options > Display > Zoom) switch between full
+    // wide display). F11 (and Options > Display > Zoom) switch between full
     // screen and a window; the window has the menu bar (Alt shows / hides it), full screen
     // never shows it. Start-up mode: --fullscreen / --borderless / --windowed, else
     // settings.ini [Display] mode=fullscreen|borderless|windowed, else exclusive full screen.
@@ -1582,41 +1589,15 @@ private:
         if (old["Display"].count("renderer")) out << "renderer=" << old["Display"]["renderer"] << ";\n";
     }
     bool altAlone_ = false;
-    bool menuOnNextWindow_ = true;     // the menu bar shows when the game becomes a window (not after Alt+Enter)
-    // Alt+Enter's own Alt (still held, or re-reported by Windows as the window changes mode) must
-    // not count as "Alt on its own": Alt is ignored until it has been released and the switch
-    // has settled (the frame and its icon are up), then works again as usual.
-    bool altHeldFromToggle_ = false;
-    Uint32 altQuietUntil_ = 0;
-    static inline bool altSuppressNative_ = false;     // read by ModalProc: no keyboard menu meanwhile
-    bool AltQuiet() {
-        // its release went missing (focus moved meanwhile): Alt is up, so stop waiting for it
-        if (altHeldFromToggle_ && !(SDL_GetModState() & KMOD_ALT) && SDL_TICKS_PASSED(SDL_GetTicks(), altQuietUntil_)) altHeldFromToggle_ = false;
-        return altHeldFromToggle_ || !SDL_TICKS_PASSED(SDL_GetTicks(), altQuietUntil_);
-    }
+    bool menuOnNextWindow_ = true;     // the menu bar shows when the game becomes a window (not after F11)
     // Alt on its own toggles the menu bar; menu clicks arrive as WM_COMMAND. True: event used.
     bool MenuEvent(const SDL_Event& e) {
-        // Alt+Enter: between full screen and a window (the window has the menu bar). The
-        // original player's Alt+Enter "Stop Movie" stays on Ctrl+Enter.
-        if (e.type == SDL_KEYDOWN && !e.key.repeat && (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) &&
-            (e.key.keysym.mod & KMOD_ALT) && !(e.key.keysym.mod & (KMOD_CTRL | KMOD_SHIFT))) {
+        // F11: between full screen and a window (the window has the menu bar; after F11 it
+        // stays hidden until Alt). Alt+Enter is the original player's Stop Movie (manual).
+        if (e.type == SDL_KEYDOWN && !e.key.repeat && e.key.keysym.sym == SDLK_F11 && !(e.key.keysym.mod & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT))) {
             altAlone_ = false;
-            if (IsFullscreen()) menuOnNextWindow_ = false;   // Alt+Enter to a window: no menu bar until Alt
+            if (IsFullscreen()) menuOnNextWindow_ = false;   // F11 to a window: no menu bar until Alt
             SetFullscreen(!IsFullscreen());
-            altHeldFromToggle_ = true;
-            altQuietUntil_ = SDL_GetTicks() + 400;
-            altSuppressNative_ = true;
-            return true;
-        }
-        if (altHeldFromToggle_ && e.type == SDL_KEYUP && (e.key.keysym.sym == SDLK_LALT || e.key.keysym.sym == SDLK_RALT)) {
-            altHeldFromToggle_ = false;
-            altQuietUntil_ = SDL_GetTicks() + 400;          // and a moment more once it's let go
-            altAlone_ = false;
-            return true;
-        }
-        if (altSuppressNative_ && !AltQuiet()) altSuppressNative_ = false;
-        if (AltQuiet() && (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) && (e.key.keysym.sym == SDLK_LALT || e.key.keysym.sym == SDLK_RALT)) {
-            altAlone_ = false;
             return true;
         }
         if (e.type == SDL_KEYDOWN && !e.key.repeat) altAlone_ = e.key.keysym.sym == SDLK_LALT || e.key.keysym.sym == SDLK_RALT;
@@ -1646,7 +1627,9 @@ private:
     static inline WNDPROC prevProc_ = nullptr;
     static inline port::Audio* modalAudio_ = nullptr;
     static LRESULT CALLBACK ModalProc(HWND h, UINT msg, WPARAM w, LPARAM l) {
-        if (msg == WM_SYSCOMMAND && (w & 0xFFF0) == SC_KEYMENU && altSuppressNative_) return 0;   // Alt+Enter's Alt
+        // Alt+Enter (Stop Movie) and Alt+R (Go To Replay) are the game's own shortcuts, not menu
+        // mnemonics: Windows would beep for them while the menu bar is up
+        if (msg == WM_SYSCHAR && (w == '\r' || w == 'r' || w == 'R')) return 0;
         if (modalAudio_) {
             if (msg == WM_ENTERMENULOOP || msg == WM_ENTERSIZEMOVE) modalAudio_->PauseOutput(true);
             else if (msg == WM_EXITMENULOOP || msg == WM_EXITSIZEMOVE) modalAudio_->PauseOutput(false);
@@ -1739,7 +1722,7 @@ private:
             menuFullscreen_ = fs;
             ShowMenuBar(!fs && menuOnNextWindow_);
             if (!fs) menuOnNextWindow_ = true;
-        }   // Zoom / Alt+Enter: hide at full screen, back on a window
+        }   // Zoom / F11: hide at full screen, back on a window
         if (!menuShown_) return;
         for (int id : {101, 102, 103, 109, 202, 203, 204, 205, 206, 207}) {
             const bool checked = (id == 205 && muted_) || (id == 204 && fs);
@@ -2489,6 +2472,9 @@ private:
             if (e.type == SDL_TEXTINPUT && mode_ == Mode::SignIn && signIn_)
                 for (const char* c = e.text.text; *c; ++c) SignInChar(*c);
             if (e.type != SDL_KEYDOWN || e.key.repeat) continue;
+            // Alt+Enter is Stop Movie: on the sign-in screen (no movie) it doesn't sign in
+            if (mode_ == Mode::SignIn && (e.key.keysym.mod & KMOD_ALT) &&
+                (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER)) continue;
             if (mode_ != Mode::Play && FrontKey(e.key.keysym.sym)) continue;
             if (mode_ != Mode::Play && e.key.keysym.sym != SDLK_ESCAPE && e.key.keysym.sym != SDLK_F11) continue;
             if (cutscene_ && e.key.keysym.sym != SDLK_F11) {
