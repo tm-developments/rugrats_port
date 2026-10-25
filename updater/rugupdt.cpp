@@ -49,6 +49,7 @@ const wchar_t* kAgent = L"RugratsAdventureGameUpdater/1.0";
 const int kBtnDownload = 100, kBtnNotes = 101, kBtnWebPage = 102, kBtnRetry = 103;
 
 HINSTANCE g_inst;
+HWND g_host = nullptr;   // an invisible window that stays open for the whole run (see CreateHost)
 std::wstring g_webPage = kDefaultWebPage;
 std::wstring g_readmeFile;   // the update's notes, fetched with the check into %TEMP% (deleted on exit)
 
@@ -265,17 +266,28 @@ HRESULT CALLBACK LinkCallback(HWND, UINT msg, WPARAM, LPARAM lp, LONG_PTR) {
 int Message(PCWSTR icon, const std::wstring& main, const std::wstring& content, bool offerWebPage, bool offerRetry = false,
             const wchar_t* retryText = L"Restart download\nWe'll try to redownload the update again") {
     TASKDIALOGCONFIG tc{}; tc.cbSize = sizeof tc;
-    tc.hInstance = g_inst;
-    tc.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW | TDF_USE_COMMAND_LINKS;
+    // the standard icons (TD_INFORMATION_ICON...) are Windows' own: with hInstance set, Windows
+    // looks for them in this program instead and the dialog fails to open
+    tc.hInstance = nullptr; tc.hwndParent = g_host;
+    tc.dwFlags = TDF_POSITION_RELATIVE_TO_WINDOW | TDF_ALLOW_DIALOG_CANCELLATION;
     tc.pszWindowTitle = kTitle; tc.pszMainIcon = icon;
     tc.pszMainInstruction = main.c_str(); tc.pszContent = content.c_str();
     TASKDIALOG_BUTTON b[2]; UINT n = 0;
     if (offerRetry) b[n++] = {kBtnRetry, retryText};
     if (offerWebPage) b[n++] = {kBtnWebPage, L"Open GitHub page\nOpens your default web browser"};
     tc.pButtons = n ? b : nullptr; tc.cButtons = n;
+    if (n) tc.dwFlags |= TDF_USE_COMMAND_LINKS;
     tc.dwCommonButtons = TDCBF_CLOSE_BUTTON;
     int pressed = 0;
-    TaskDialogIndirect(&tc, &pressed, nullptr, nullptr);
+    if (FAILED(TaskDialogIndirect(&tc, &pressed, nullptr, nullptr))) {   // never leave the player with nothing
+        const UINT type = icon == TD_ERROR_ICON ? MB_ICONERROR : icon == TD_WARNING_ICON ? MB_ICONWARNING : MB_ICONINFORMATION;
+        if (offerRetry) {
+            const int r = MessageBoxW(g_host, (main + L"\n\n" + content + L"\n\nTry again?").c_str(), kTitle, type | MB_RETRYCANCEL);
+            return r == IDRETRY ? kBtnRetry : IDCLOSE;
+        }
+        MessageBoxW(g_host, (main + L"\n\n" + content).c_str(), kTitle, type | MB_OK);
+        return IDCLOSE;
+    }
     if (pressed == kBtnWebPage) OpenInBrowser(g_webPage);
     return pressed;
 }
@@ -311,8 +323,8 @@ bool RunWithProgress(const std::wstring& main, const std::wstring& content, bool
     std::thread worker([&] { t.ok = work(); t.finished = true; });
     ProgressCtx ctx{&t, marquee};
     TASKDIALOGCONFIG tc{}; tc.cbSize = sizeof tc;
-    tc.hInstance = g_inst;
-    tc.dwFlags = TDF_SHOW_PROGRESS_BAR | TDF_CALLBACK_TIMER | TDF_ALLOW_DIALOG_CANCELLATION | (marquee ? TDF_SHOW_MARQUEE_PROGRESS_BAR : 0);
+    tc.hInstance = g_inst; tc.hwndParent = g_host;
+    tc.dwFlags = TDF_POSITION_RELATIVE_TO_WINDOW | TDF_SHOW_PROGRESS_BAR | TDF_CALLBACK_TIMER | TDF_ALLOW_DIALOG_CANCELLATION | (marquee ? TDF_SHOW_MARQUEE_PROGRESS_BAR : 0);
     tc.pszWindowTitle = kTitle; tc.pszMainIcon = MAKEINTRESOURCEW(1);
     tc.pszMainInstruction = main.c_str(); tc.pszContent = content.c_str();
     tc.dwCommonButtons = TDCBF_CANCEL_BUTTON;
@@ -391,8 +403,8 @@ int Run(const std::wstring& url) {
     if (!g_readmeFile.empty()) content += L"\n\n<a href=\"whatsnew\">See what's new</a>";
     TASKDIALOG_BUTTON buttons[] = {{kBtnDownload, L"Download and install\nDownloads from GitHub"}};
     TASKDIALOGCONFIG tc{}; tc.cbSize = sizeof tc;
-    tc.hInstance = g_inst;
-    tc.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_USE_COMMAND_LINKS | TDF_ENABLE_HYPERLINKS;
+    tc.hInstance = g_inst; tc.hwndParent = g_host;
+    tc.dwFlags = TDF_POSITION_RELATIVE_TO_WINDOW | TDF_ALLOW_DIALOG_CANCELLATION | TDF_USE_COMMAND_LINKS | TDF_ENABLE_HYPERLINKS;
     tc.pszWindowTitle = kTitle; tc.pszMainIcon = MAKEINTRESOURCEW(1);
     const std::wstring main = L"New update available!";
     tc.pszMainInstruction = main.c_str(); tc.pszContent = content.c_str();
@@ -400,7 +412,11 @@ int Run(const std::wstring& url) {
     tc.dwCommonButtons = TDCBF_CANCEL_BUTTON;
     tc.pfCallback = LinkCallback;
     int pressed = 0;
-    TaskDialogIndirect(&tc, &pressed, nullptr, nullptr);
+    if (FAILED(TaskDialogIndirect(&tc, &pressed, nullptr, nullptr))) {
+        std::wstring plain = content.substr(0, content.find(L"\n\n<a "));
+        if (MessageBoxW(g_host, (main + L"\n\n" + plain + L"\n\nDownload and install now?").c_str(), kTitle, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+            pressed = kBtnDownload;
+    }
     if (pressed != kBtnDownload) return 0;
     while (GameRunning()) {
         if (Message(TD_WARNING_ICON, L"Before we can continue...",
@@ -451,6 +467,28 @@ int Run(const std::wstring& url) {
 
 }  // namespace
 
+// The updater shows one dialog after another. Between two of them it would have no window at
+// all for a moment, and Windows then gives the foreground to another program and keeps the next
+// dialog behind it (focus-stealing protection). So an invisible window - transparent, centred,
+// with the updater's title and icon on the taskbar - stays open the whole time and owns every
+// dialog: the updater keeps the foreground and each dialog opens in front, centred on screen.
+void CreateHost() {
+    WNDCLASSEXW wc{}; wc.cbSize = sizeof wc;
+    wc.lpfnWndProc = DefWindowProcW;
+    wc.hInstance = g_inst;
+    wc.hIcon = LoadIconW(g_inst, MAKEINTRESOURCEW(1));
+    wc.hIconSm = static_cast<HICON>(LoadImageW(g_inst, MAKEINTRESOURCEW(1), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
+    wc.lpszClassName = L"RugratsUpdaterHost";
+    RegisterClassExW(&wc);
+    const int x = GetSystemMetrics(SM_CXSCREEN) / 2, y = GetSystemMetrics(SM_CYSCREEN) / 2;
+    g_host = CreateWindowExW(WS_EX_APPWINDOW | WS_EX_LAYERED, wc.lpszClassName, kTitle, WS_POPUP,
+                             x, y, 1, 1, nullptr, nullptr, g_inst, nullptr);
+    if (!g_host) return;
+    SetLayeredWindowAttributes(g_host, 0, 0, LWA_ALPHA);   // fully transparent
+    ShowWindow(g_host, SW_SHOW);
+    SetForegroundWindow(g_host);
+}
+
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     g_inst = inst;
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -468,7 +506,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
         if (_wcsicmp(argv[i], L"/url") == 0 || _wcsicmp(argv[i], L"--url") == 0) url = argv[++i];
     if (argv) LocalFree(argv);
 
+    CreateHost();
     const int rc = Run(url);
+    if (g_host) DestroyWindow(g_host);
     if (single) CloseHandle(single);
     return rc;
 }
