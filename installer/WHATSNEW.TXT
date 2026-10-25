@@ -1,0 +1,18 @@
+WHAT'S NEW IN VERSION 1.1
+-------------------------
+
+  - Alt+Enter skips a movie again, as in the original game. Full screen /
+    window is now F11 (also Options > Display > Zoom).
+  - The README lists all of the original's keyboard shortcuts: Ctrl+Q,
+    Alt+R, Ctrl+Up/Down, Ctrl+M, Ctrl+V, Ctrl+Enter and Space.
+  - New Start menu shortcut, "Update Rugrats Adventure Game (x64)", to check
+    for new versions.
+  - Updating keeps your installed game files and saved progress, and no
+    longer needs the CD-ROM.
+  - The README links to the project's GitHub and SourceForge pages.
+  - Starting the game while it's already running brings the running game to
+    the front.
+  - Closing the About box no longer minimizes the game in full screen.
+
+The full README is in the game's Start menu folder
+("Rugrats Adventure Game (x64) ReadMe").

@@ -5,6 +5,8 @@
 //                     page: pre-selects the drive labelled RUGRATS that holds the game)
 //   CheckGameDisc  -> function CheckGameDisc  (Next button of the Game Disc page:
 //                     sets GAMEDISC_OK to "1" if GAMEDISC holds the game, else "0")
+//   FindInstalledGame -> function FindInstalledGame (upgrades: InstallUISequence and
+//                     InstallExecuteSequence, after FindRelatedProducts, before CostInitialize)
 // Plain JScript (jscript.dll), so it doesn't depend on VBScript, which Windows is phasing out.
 
 // Diagnostics: each line goes to the Windows Installer log (search for "GameDisc:") and is also
@@ -85,4 +87,39 @@ function CheckGameDisc() {
     } catch (err) { ok = false; Log("CheckGameDisc error: " + err.message); }
     Session.Property("GAMEDISC_OK") = ok ? "1" : "0";
     return 1;
+}
+
+// Upgrades (1.1 and later over an earlier version): the game's files copied from the disc
+// stay in the earlier version's folder (its uninstall leaves them while upgrading). If that
+// folder still holds them, GAMEDATA_FOUND = "1" and INSTALLDIR is set to that folder, so the
+// new version goes back in the same place and the disc page and the copy from the disc are
+// skipped. UPGRADE_PROPERTY is the Upgrade table's action property (set by FindRelatedProducts
+// to the earlier version's product code).
+var UPGRADE_PROPERTY = "UPGRADE_1";
+var GAME_FOLDERS = ["PROGRAM\\MHK"];
+
+function FindInstalledGame() {
+    try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var codes = String(Session.Property(UPGRADE_PROPERTY)).split(";");
+        Log("FindInstalledGame start, " + UPGRADE_PROPERTY + "='" + codes.join(";") + "'");
+        for (var i = 0; i < codes.length; ++i) {
+            var code = codes[i];
+            if (code == "") continue;
+            var loc = "";
+            try { loc = String(Session.Installer.ProductInfo(code, "InstallLocation")); } catch (e) { loc = ""; }
+            loc = WithSlash(loc);
+            if (loc == "") { Log("  " + code + ": no install location recorded"); continue; }
+            var ok = IsGameFolder(fso, loc);
+            for (var k = 0; ok && k < GAME_FOLDERS.length; ++k)
+                if (!fso.FolderExists(loc + GAME_FOLDERS[k])) { Log("  missing " + loc + GAME_FOLDERS[k]); ok = false; }
+            if (!ok) { Log("  " + code + ": '" + loc + "' doesn't hold the game's files"); continue; }
+            Session.Property("INSTALLDIR") = loc;
+            Session.Property("GAMEDATA_FOUND") = "1";
+            Log("  " + code + ": game files found in '" + loc + "' - reusing them");
+            return 1;
+        }
+        Log("no installed game files found");
+    } catch (err) { Log("FindInstalledGame error: " + err.message); }
+    return 1;   // never fail the install from here
 }

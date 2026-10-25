@@ -1,2 +1,39 @@
-MAINICON ICON "C:\\RAG\\AUTORUN\\RRATADV.ICO"
+// Windows resources: icon, manifest, version information (Explorer > Properties > Details).
+#include <winver.h>
+#pragma code_page(65001)
+
+// ID 1: SDL2 gives its window class icon resource 1 (title bar, taskbar, Alt+Tab)
+1 ICON "res/rugrats_port.ico"
 1 24 "rugrats_port.manifest"
+
+#define PORT_VERSION     1,1,0,0
+#define PORT_VERSION_STR "1.1.0.0"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     PORT_VERSION
+PRODUCTVERSION  PORT_VERSION
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName",      "T.M. DEVELOPMENTS"
+      VALUE "FileDescription",  "Rugrats Adventure Game (x64)"
+      VALUE "FileVersion",      PORT_VERSION_STR
+      VALUE "InternalName",     "rugrats_port"
+      VALUE "OriginalFilename", "RUGRATS.EXE"
+      VALUE "ProductName",      "Rugrats Adventure Game (x64)"
+      VALUE "ProductVersion",   PORT_VERSION_STR
+      VALUE "LegalCopyright",   "Port © 2026 T.M. DEVELOPMENTS. Rugrats (c) 1998 Viacom International Inc. All Rights Reserved."
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END

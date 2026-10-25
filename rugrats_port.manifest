@@ -1,16 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Rugrats Adventure Game (Windows port): use the current Windows look (Common Controls 6
-     visual styles) for the player's menu bar and dialogs, and declare the Windows versions
-     it was tested on so no compatibility shims are applied. -->
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="Broderbund.RugratsAdventureGame" version="1.0.0.0" processorArchitecture="amd64"/>
-  <description>Rugrats Adventure Game</description>
+<!-- Rugrats Adventure Game - unofficial 64-bit Windows port.
+     Current Windows look (Common Controls 6) for the menu bar and message boxes; the Windows
+     versions it supports (no compatibility shims); per-monitor DPI awareness (the 640x480 game
+     is scaled by the port itself, not blurred by Windows); runs as the invoking user - saves
+     and settings go to the user's AppData folder, so Windows never redirects writes into a
+     VirtualStore copy. -->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
+  <assemblyIdentity type="win32" name="RugratsAdventureGame.UnofficialPort" version="1.1.0.0" processorArchitecture="amd64"/>
+  <description>Rugrats Adventure Game (unofficial port)</description>
   <dependency>
     <dependentAssembly>
       <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0"
                         processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"/>
     </dependentAssembly>
   </dependency>
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <asmv3:application>
+    <asmv3:windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+    </asmv3:windowsSettings>
+  </asmv3:application>
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/> <!-- Windows 10 / 11 -->

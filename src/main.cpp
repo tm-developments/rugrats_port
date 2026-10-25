@@ -1488,9 +1488,9 @@ private:
         case 109: {
             const std::string text =
                 "Rugrats Adventure Game\n"
-                "Version 1.0 (x64)\n"
+                "Version 1.1 (x64)\n"
                 "Copyright 1998, Broderbund Software\n"
-                "Ported by T.M. DEVELOPMENTS (2026). Developed with Claude by Anthropic, PBC.\n\n"
+                "Ported by T.M. DEVELOPMENTS (2026). Developed with Claude by Anthropic PBC.\n\n"
                 "Unofficial port by T.M. DEVELOPMENTS. Not endorsed by or affiliated with "
                 "HMH Education Company, Encore, Inc., Nickelodeon or Skydance Corporation. "
                 "It contains no game content; it plays the files copied from your own original CD-ROM.\n\n"
@@ -1501,6 +1501,14 @@ private:
             const bool exclusive = IsFullscreen() && (SDL_GetWindowFlags(window_) & SDL_WINDOW_FULLSCREEN_DESKTOP) != SDL_WINDOW_FULLSCREEN_DESKTOP;
             if (exclusive) SDL_SetWindowFullscreen(window_, SDL_WINDOW_FULLSCREEN_DESKTOP);
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "About Rugrats Adventure Game", text.c_str(), window_);
+            // What the box itself caused must not reach the game: the focus it took (its loss
+            // would minimize exclusive full screen once that is back) and the key or click that
+            // closed it (Esc would open the quit prompt, Enter would act on the page)
+            SDL_PumpEvents();
+            SDL_FlushEvents(SDL_KEYDOWN, SDL_TEXTINPUT);
+            SDL_FlushEvents(SDL_MOUSEBUTTONDOWN, SDL_MOUSEBUTTONUP);
+            SDL_FlushEvent(SDL_WINDOWEVENT);
+            focusQuietUntil_ = SDL_GetTicks() + 500;
             if (exclusive) SetFullscreen(true);
             if (audio_) audio_->PauseOutput(false);
             break;
@@ -1589,6 +1597,7 @@ private:
         if (old["Display"].count("renderer")) out << "renderer=" << old["Display"]["renderer"] << ";\n";
     }
     bool altAlone_ = false;
+    Uint32 focusQuietUntil_ = 0;       // a moment after the About box: its focus changes don't minimize
     bool menuOnNextWindow_ = true;     // the menu bar shows when the game becomes a window (not after F11)
     // Alt on its own toggles the menu bar; menu clicks arrive as WM_COMMAND. True: event used.
     bool MenuEvent(const SDL_Event& e) {
@@ -2462,6 +2471,7 @@ private:
             // which also gives the desktop its own display back; clicking the taskbar button
             // restores the game full screen. Borderless and windowed stay where they are.
             if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST && window_ && opt_.headlessFrames <= 0
+                && SDL_TICKS_PASSED(SDL_GetTicks(), focusQuietUntil_)          // (not the About box closing)
                 && (SDL_GetWindowFlags(window_) & SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL_WINDOW_FULLSCREEN)
                 SDL_MinimizeWindow(window_);
             if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) SetFrozen(false);
@@ -2918,6 +2928,45 @@ static bool RelaunchElevated() {
 }
 #endif
 
+#ifdef _WIN32
+// One game at a time: a second start brings the running game to the front and exits. The
+// mutex lives in this Windows session; a game started as administrator (--portable in a
+// protected folder) counts too (its mutex can't be opened from a normal run: access denied).
+static HANDLE g_instanceMutex = nullptr;
+static BOOL CALLBACK FrontOurWindow(HWND h, LPARAM) {
+    if (!IsWindowVisible(h) && !IsIconic(h)) return TRUE;
+    wchar_t cls[32];
+    if (!GetClassNameW(h, cls, int(std::size(cls))) || std::wcscmp(cls, L"SDL_app") != 0) return TRUE;
+    DWORD pid = 0;
+    GetWindowThreadProcessId(h, &pid);
+    if (!pid || pid == GetCurrentProcessId()) return TRUE;
+    wchar_t mine[MAX_PATH * 4], theirs[MAX_PATH * 4];
+    DWORD n = DWORD(std::size(theirs));
+    if (!GetModuleFileNameW(nullptr, mine, DWORD(std::size(mine)))) return TRUE;
+    HANDLE p = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!p) return TRUE;
+    const bool same = QueryFullProcessImageNameW(p, 0, theirs, &n) && _wcsicmp(mine, theirs) == 0;
+    CloseHandle(p);
+    if (!same) return TRUE;
+    if (IsIconic(h)) ShowWindow(h, SW_RESTORE);
+    SetForegroundWindow(h);
+    return FALSE;
+}
+// True when this is the only running game (or the wait for the one being replaced ended).
+static bool TakeSingleInstance(bool waitForPrevious) {
+    const wchar_t* name = L"Local\\RugratsAdventureGame_x64_TMDevelopments";
+    for (int tries = 0;; ++tries) {
+        g_instanceMutex = CreateMutexW(nullptr, TRUE, name);
+        const DWORD err = GetLastError();
+        if (g_instanceMutex && err != ERROR_ALREADY_EXISTS) return true;
+        if (g_instanceMutex) { CloseHandle(g_instanceMutex); g_instanceMutex = nullptr; }
+        // the admin relaunch (--elevated) starts while the run that launched it is still closing
+        if (!waitForPrevious || tries >= 50) return false;
+        Sleep(100);
+    }
+}
+#endif
+
 int main(int argc, char** argv) {
     static_assert(sizeof(void*) == 8, "this port targets 64-bit builds");
 #ifdef _WIN32
@@ -2951,6 +3000,13 @@ int main(int argc, char** argv) {
         });
         return ok ? 0 : 1;
     }
+#ifdef _WIN32
+    if (opt->headlessFrames == 0 && !TakeSingleInstance(opt->elevatedRelaunch)) {
+        std::printf("already running: bringing that game to the front\n");
+        EnumWindows(FrontOurWindow, 0);
+        return 0;
+    }
+#endif
     if (opt->movies.empty()) {
         // the converted movies and sounds: beside the game when the installer made them,
         // else (first run of a plain copy) built once into the user's local app data
@@ -2981,7 +3037,12 @@ int main(int argc, char** argv) {
         bool gameFolder = opt->portable || fs::exists(d / "portable", ec) || fs::exists(d / "portable.txt", ec);
         if (gameFolder && opt->headlessFrames == 0 && !GameFolderWritable(opt->data)) {
 #ifdef _WIN32
-            if (!opt->elevatedRelaunch && RelaunchElevated()) return 0;
+            if (!opt->elevatedRelaunch) {
+                // the admin copy takes over the one-game-at-a-time lock as this one exits
+                if (g_instanceMutex) { ReleaseMutex(g_instanceMutex); CloseHandle(g_instanceMutex); g_instanceMutex = nullptr; }
+                if (RelaunchElevated()) return 0;
+                TakeSingleInstance(true);
+            }
 #endif
             gameFolder = false;
         }

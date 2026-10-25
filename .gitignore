@@ -44,3 +44,12 @@ rugrats_crash*.txt
 *.msi
 *.cab
 installer/output/
+
+# WiseUpdate client manifest (visual styles only; installer input, not published)
+update/WiseUpdt.EXE.manifest
+
+# Installer page text, generated from README.TXT / EULA.TXT and imported into the Wise project
+installer/README.RTF
+installer/EULA.RTF
+
+installer/WHATSNEW.RTF
