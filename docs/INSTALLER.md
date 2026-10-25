@@ -250,24 +250,28 @@ the same as 8.1. Check the build number instead, which also excludes 8.1 (build 
 - Keep Wise's "Windows NT Version: Vista 64-bit" entry as the x64-only gate (`VersionNT64`).
 - For a later Vista/7 build (with an older FFmpeg), relax it to `VersionNT64 >= 600`.
 
-### Updates with WiseUpdate
+### Updates (RUGUPDT.EXE)
 
-WiseUpdate (the *WiseUpdate* page in Installation Expert) installs a small client,
-`WiseUpdate Client` (WUClient), with a Start Menu shortcut "Check for Updates". It downloads
-an **update information file** from a URL you set at build time, compares versions, then
-downloads and runs the newer installer that the file points to.
+WiseUpdate isn't used: its client only speaks plain HTTP, and GitHub (like nearly every host
+today) serves HTTPS only. The installer instead ships the port's own updater, `RUGUPDT.EXE`
+(source in `updater/`, built by CMake), with the Start menu shortcut
+"Update Rugrats Adventure Game (x64)".
 
-- **Hosting.** Any plain file URL works. Use one that doesn't redirect and won't change:
-  - GitHub Pages: `https://<user>.github.io/<repo>/wiseupdate.txt`
-  - or raw: `https://raw.githubusercontent.com/<user>/<repo>/main/wiseupdate.txt`
-
-  Point the download entry at the GitHub Releases asset or the archive.org file.
-  - GitHub release downloads and archive.org redirect to their storage servers. The client
-    uses the Windows internet stack (WinINet), which follows redirects and gets TLS 1.2 from
-    Windows 10 itself.
-  - Still, test the "Check for Updates" shortcut once against the real URLs: the update
-    file, the Releases asset and archive.org. A 2000s-era client may not follow every redirect.
-  - Use `https://` everywhere, since GitHub and archive.org no longer serve plain HTTP.
+- It reads `update/rugrats_update.ini` from the repo over HTTPS
+  (`https://raw.githubusercontent.com/tm-developments/rugrats_port/main/update/rugrats_update.ini`),
+  in WiseUpdate's format:
+  ```ini
+  [WiseUpdate]
+  Version=1.1
+  Size=<exact size of RRATADV64.EXE in bytes>
+  Install=https://github.com/tm-developments/rugrats_port/releases/download/v1.1/RRATADV64.EXE
+  SHA256=<checksum of RRATADV64.EXE>          ; optional, checked after download
+  ReadMe=https://raw.githubusercontent.com/tm-developments/rugrats_port/main/installer/WHATSNEW.TXT   ; optional
+  ```
+- It compares `Version` with the installed RUGRATS.EXE's file version, downloads the installer
+  into `%TEMP%\RugratsUpdate\`, checks Size (and SHA256), and starts it. It runs as the user;
+  the installer asks for administrator rights itself.
+- Release order: publish the GitHub release with the exe first, then push the updated ini.
 - **The update installer must be a proper upgrade:**
   - Same UpgradeCode, a higher ProductVersion (1.0.1, ...) and a new ProductCode (a major
     upgrade, Upgrade table with `RemoveExistingProducts`).
