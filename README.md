@@ -205,7 +205,7 @@ play-testing side by side against footage of the original.
 
 | Dates (2026) | Work |
 |---|---|
-| Oct 13 to Oct 18 | Archive, bitmap, sprite, movie and sound support; the script engine; the house, all eleven activities, episodes, cutscenes, Let's Play / Let's See / Replay; play-testing against the original to a complete play-through |
+| Oct 13 to Oct 18 | Archive, bitmap, sprite, movie and sound support; the script engine; the house, all 11 activities, episodes, cutscenes, Let's Play / Let's See / Replay; playtesting against the original to a complete playthrough |
 | Oct 23 | Final fixes (final fight, end credits, Replay, quit flow); release build: display modes, per-user saves, built-in asset preparation, icon, version info, licenses, installer plan |
 
 ## Bugs and feature requests
