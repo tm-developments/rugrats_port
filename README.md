@@ -194,7 +194,7 @@ and the endings are the original's.** Changes cover how it runs on a modern PC.
 - New high-resolution icon. The small sizes (16 to 64 px) are Tommy from the original
   `RRATADV.ICO`, and the large sizes (96 to 256 px) are the *Rugrats Adventure Game* logo.
 
-Bugs found and fixed while play-testing the port itself aren't listed here, since the
+Bugs found and fixed while playtesting the port itself aren't listed here, since the
 original never had them.
 
 ## Development timeline
