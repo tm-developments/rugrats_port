@@ -490,7 +490,15 @@ int Item::RunScriptEntry(ScriptEntry& e) {
             if (id == 0xffff) { targets.push_back(this); continue; }
             if (id != 0) { targets.push_back(vm_->ItemById(id)); continue; }
             // target 0: every item. disable/enable switch the all-items lock; events go to all.
-            if (e.opcode == 0x8 || e.opcode == 0x9) { vm_->LockAll(e.opcode == 0x8); continue; }
+            // An animation that switches everything off as it starts keeps playing: Stu's and
+            // Didi's close-ups that stop Tommy at the trash can switch themselves on, then
+            // everything off (locked out, they froze on their first picture and never gave the
+            // game back). The quit prompt's callers (page controls) are locked as before.
+            if (e.opcode == 0x8 || e.opcode == 0x9) {
+                vm_->LockAll(e.opcode == 0x8);
+                if (e.opcode == 0x8 && type_ == kItemAnim && IsPlaying()) vm_->unlocked_.insert(serial_);
+                continue;
+            }
             for (Item* x : vm_->AllItems()) if (!x->Dead()) targets.push_back(x);
         }
         if (targets.empty()) return 0;
@@ -1102,11 +1110,14 @@ void MovieItem::OpenVideo() {
 }
 // A zoom between rooms shows its first picture as soon as it is loaded (QuickTime puts the
 // movie up when it opens): the babies hidden by the click are already in it, so the room
-// doesn't stand empty while the script waits (MAIN's Cludge) before starting it.
+// doesn't stand empty while the script waits (MAIN's Cludge) before starting it. A cut scene
+// that starts as it loads (the opening one after a new player's sign-in) shows its first
+// picture at once too: the black cover in front of the playpen goes the moment it is
+// loaded, and the movie starts on the next tick - one frame of the empty playpen between.
 void MovieItem::Load() {
     const bool was = loaded_;
     Item::Load();
-    if (!was && loaded_ && !video_ && name_.rfind("Zoom", 0) == 0) OpenVideo();
+    if (!was && loaded_ && !video_ && (name_.rfind("Zoom", 0) == 0 || timingMode_ == kAutoLoad)) OpenVideo();
 }
 void MovieItem::Unload() {
     if (!playing_) Close();

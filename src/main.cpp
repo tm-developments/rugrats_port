@@ -1248,6 +1248,7 @@ private:
         if (mouseIn_ && (mouseX_ != lbMouseX_ || mouseY_ != lbMouseY_)) EngineMouseMove(mouseX_, mouseY_);
         lb_->Update(lbTime_);
         SignInAngelica();
+        ResumeAfterBridge();
         Autosave(dt);
         for (auto it = lbVoices_.begin(); it != lbVoices_.end();) it = !lbPausedLeft_.count(it->first) && lbTime_ >= it->second + 2000 ? lbVoices_.erase(it) : std::next(it);
         if (lbPending_) { auto f = std::move(lbPending_); lbPending_ = nullptr; f(); }
@@ -1267,6 +1268,35 @@ private:
             mc->RunScript(207);
             std::printf("[engine] autosave\n");
         }
+    }
+
+    // Resuming chapter 1 after the opening cut scene (Tommy has the screwdriver, puzzle 2):
+    // the game opens with NIS01Bridge, which hides the cursor and switches off the toolbar for
+    // the chapter's cut scene; puzzle 2 has none, and it is NIS01's end that gives them back
+    // and seats Stu on the couch (StuButton). Left that way the playpen came up without Stu
+    // and ignored every click. When the bridge has finished, no cut scene took over and the
+    // cursor is still hidden by the bridge, this does what NIS01's end does.
+    bool bridgePlaying_ = false;
+    uint32_t bridgeCheckAt_ = 0;
+    void ResumeAfterBridge() {
+        if (lbSection_ != "English.Play") { bridgePlaying_ = false; bridgeCheckAt_ = 0; return; }
+        lb::Item* br = lb_->ItemByName("NIS01Bridge");
+        const bool playing = br && !br->Dead() && br->IsPlaying();
+        if (bridgePlaying_ && !playing) bridgeCheckAt_ = lbTime_ + 250;
+        bridgePlaying_ = playing;
+        if (!bridgeCheckAt_ || lbTime_ < bridgeCheckAt_) return;
+        bridgeCheckAt_ = 0;
+        if (lb_->cursorShown_ || lb_->cursorHider_ != "NIS01Bridge" || !lb_->Movies().empty()) return;
+        if (lb_->Var("xnEpisode").ToInt() != 0 || lb_->Var("xnCurPuzzle").ToInt() != 2) return;
+        std::printf("[engine] resume: cursor and toolbar back after the bridge (chapter 1, puzzle 2)\n");
+        lb_->cursorShown_ = true; lb_->cursorHider_.clear();
+        if (lb::Item* t = lb_->ItemByName("ToolControl")) t->RunScript(238);
+        if (lb::Item* c = lb_->ItemByName("CursorControl")) c->RunScript(236);
+        if (lb::Item* stu = lb_->ItemByName("StuButton"); stu && !stu->Dead()) stu->SetGlobalVisible(true);
+        // and the chapter's music (StateSnd1), which puzzle 1 starts and puzzle 2 only inherits:
+        // event 149 loads (starts) it, as the later episodes do when they resume
+        const std::string snd = lb_->Str(lb_->Var("xvStateSnd"));
+        if (lb::Item* s = snd.empty() || snd == "NONE" ? nullptr : lb_->ItemByName(snd); s && !s->Dead() && !s->IsPlaying()) s->RunScript(149);
     }
 
     // Sign-in: Angelica's name instructions (SignInPromptControl -> SignInPrompt). The page's
@@ -1488,7 +1518,7 @@ private:
         case 109: {
             const std::string text =
                 "Rugrats Adventure Game\n"
-                "Version 1.1 (x64)\n"
+                "Version 1.1.1 (x64)\n"
                 "Copyright 1998, Broderbund Software\n"
                 "Ported by T.M. DEVELOPMENTS (2026). Developed with Claude by Anthropic PBC.\n\n"
                 "Unofficial port by T.M. DEVELOPMENTS. Not endorsed by or affiliated with "

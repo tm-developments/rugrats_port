@@ -929,7 +929,7 @@ void Engine::UpdateSetup() {
     ns.swap(notifies_);
     for (const NotifyEvent& n : ns) {
         if (n.kind == NotifyEvent::kIntroDone) { if (n.param == 1) introDone_ = true; continue; }
-        if (n.kind == NotifyEvent::kShowCursor) { cursorShown_ = n.param != 0; continue; }
+        if (n.kind == NotifyEvent::kShowCursor) { cursorShown_ = n.param != 0; cursorHider_ = cursorShown_ ? std::string() : n.text; continue; }
         if (host_.notify) host_.notify(n);
     }
 }
@@ -1073,7 +1073,7 @@ void Engine::Update(uint32_t nowMs) {
     ns.swap(notifies_);
     for (const NotifyEvent& n : ns) {
         if (n.kind == NotifyEvent::kIntroDone) { if (n.param == 1) introDone_ = true; continue; }
-        if (n.kind == NotifyEvent::kShowCursor) { cursorShown_ = n.param != 0; continue; }
+        if (n.kind == NotifyEvent::kShowCursor) { cursorShown_ = n.param != 0; cursorHider_ = cursorShown_ ? std::string() : n.text; continue; }
         if (host_.notify) host_.notify(n);
     }
 }

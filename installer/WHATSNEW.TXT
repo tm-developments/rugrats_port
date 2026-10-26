@@ -1,3 +1,14 @@
+WHAT'S NEW IN VERSION 1.1.1
+---------------------------
+
+  - Fixed: clicking the trash can while Stu or Didi was in the kitchen could
+    freeze the game on their close-up.
+  - Fixed: continuing a game saved in the playpen after the opening cutscene
+    left Stu off the couch, the music silent and the cursor not responding.
+  - Fixed: the empty playpen could flash for a moment before the opening
+    cutscene of a new game.
+
+
 WHAT'S NEW IN VERSION 1.1
 -------------------------
 

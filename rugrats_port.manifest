@@ -6,7 +6,7 @@
      and settings go to the user's AppData folder, so Windows never redirects writes into a
      VirtualStore copy. -->
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
-  <assemblyIdentity type="win32" name="RugratsAdventureGame.UnofficialPort" version="1.1.0.0" processorArchitecture="amd64"/>
+  <assemblyIdentity type="win32" name="RugratsAdventureGame.UnofficialPort" version="1.1.1.0" processorArchitecture="amd64"/>
   <description>Rugrats Adventure Game (unofficial port)</description>
   <dependency>
     <dependentAssembly>

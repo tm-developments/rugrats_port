@@ -925,7 +925,7 @@ void Interp::NotifyCommand(uint8_t id) {
         break;
     case 4: n.kind = NotifyEvent::kGotoQuit; vm->PostNotify(n); break;
     case 5: n.kind = NotifyEvent::kIntroDone; n.param = 1; vm->PostNotify(n); break;
-    case 7: n.kind = NotifyEvent::kShowCursor; n.param = ps.empty() ? 1 : ps[0].ToInt(); vm->PostNotify(n); break;
+    case 7: n.kind = NotifyEvent::kShowCursor; n.param = ps.empty() ? 1 : ps[0].ToInt(); if (src) n.text = src->Name(); vm->PostNotify(n); break;
     case 13: n.kind = NotifyEvent::kQuit; vm->PostNotify(n); break;
     default: break;
     }

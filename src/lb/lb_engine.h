@@ -588,6 +588,7 @@ public:
     int smoothDx_ = 0;                       // host: room drawn this far from view_.x (smooth turns)
     bool OnScreenLayer(const Item* it) const;   // fixed on the screen (doesn't take part in smooth turns)
     bool cursorShown_ = true;
+    std::string cursorHider_;               // the item whose script last hid the cursor
     bool waitCursor_ = false;                // waitcursor(): the player's busy cursor
     bool hideCursorItems_ = false;           // set by the host while the busy cursor shows
     void SetOutline(const port::Outline* o) { outline_ = o; }
